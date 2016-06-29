@@ -1,0 +1,3 @@
+#!/bin/sh
+#rm -rf classes/*
+javac -cp Reverb:CoreNLP:src src/*.java -d ./classes/
