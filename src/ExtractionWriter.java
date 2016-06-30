@@ -7,20 +7,20 @@ import java.lang.*;
 
 class ExtractionWriter implements Runnable {
  
-  private final BlockingQueue<Pair<String, String>> relations_queue;
+  private final BlockingQueue<String> relations_queue;
   private final PrintWriter writer;
   private long count = 0;
   
 
   // <article id, relations>
-  ExtractionWriter(BlockingQueue<Pair<String,String>> relations_queue, PrintWriter writer) {
+  ExtractionWriter(BlockingQueue<String> relations_queue, PrintWriter writer) {
     this.relations_queue = relations_queue; 
     this.writer = writer;
   }
 
   public void run() {
     while (true) {
-      Pair<String,String> relations = null;
+      String relations = null;
       try {
         relations = relations_queue.take();
       } catch (InterruptedException e) {
@@ -28,8 +28,7 @@ class ExtractionWriter implements Runnable {
         continue;
       }
       if (relations == Main.POISON_PILL) return;
-      writer.println(relations.first);
-      writer.println(relations.second);
+      writer.println(relations);
       writer.println();
       count++;
       if (count % Main.logFrequency == 0) {

@@ -17,6 +17,10 @@ public class Utils {
     return new ReVerbExtractor();
   }
 
+  public static ConfidenceFunction initConf() throws IOException {
+    return new ReVerbOpenNlpConfFunction();
+  }
+
   public static void shutdown(ExecutorService pool) {
     pool.shutdown();
     try {
@@ -24,7 +28,7 @@ public class Utils {
     } catch (InterruptedException e) { printError(e); }
   }
 
-  public static void shutdownWriter(BlockingQueue<Pair<String,String>> relations, Thread writer) {
+  public static void shutdownWriter(BlockingQueue<String> relations, Thread writer) {
     try {
       relations.put(Main.POISON_PILL);
     } catch (InterruptedException e) { 
@@ -122,7 +126,8 @@ public class Utils {
       inputWriters.get((int) i % (inputWriters.size())).println(line);
       i++;
     }
-    for (int j = 0; j < nGroups; i++) {
+    System.out.println("Finished distributing inputs...now closing input files");
+    for (int j = 0; j < nGroups; j++) {
       inputWriters.get(j).close();
     }
 
@@ -184,8 +189,9 @@ public class Utils {
   public static String getElapsed() {
     return "[" + TimeUnit.NANOSECONDS.toMinutes(System.nanoTime() - Main.startTime) + " min(s) elapsed]";
   }
+
   public static void printFailed(int failed) {
-    if (failed % 10 == 0) {
+    if (failed % Main.logFrequency == 0) {
       System.out.println(getElapsed() + failed + " number of executions have failed.");
     }
   }
