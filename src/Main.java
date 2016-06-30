@@ -29,6 +29,8 @@ public class Main {
   public static final String POISON_PILL = "POISON PILL END WRITING QUEUE ";
   // # of examples
   public static final int logFrequency = 10;
+  public static final int MAX_BACKLOG = 20;
+  public static final Semaphore backlog = new Semaphore(MAX_BACKLOG);
 
 
   public static void main(String[] args) throws IOException {
@@ -96,11 +98,22 @@ public class Main {
 
     JsonObject obj = null;
     while ( (obj = Utils.read(in)) != null) {
+      String id = "";
       try {
-        String id = obj.getInt("articleId") + ""; 
-        Runnable runner = new Extractor(relations, obj);
-        scheduler.submit(new TimeoutRunner(pool, id, failedW, runner, timeout));
-      } catch (Exception e) { Utils.printError(e); }
+        // Check fields exist
+        id = obj.getInt("articleId") + "";
+        String text = obj.getString("text");
+        String date = obj.getString("date");
+      } catch (Exception e) {
+        Utils.printError(e);
+        int malformedCount = malformed.incrementAndGet();
+        if (malformedCount % logFrequency == 0) {
+          System.out.println(malformedCount + " number of malformed examples");
+        }
+        continue;
+      }
+      Runnable runner = new Extractor(relations, obj);
+      scheduler.submit(new TimeoutRunner(pool, id, failedW, runner, timeout));
     }
 
     Utils.shutdown(scheduler);

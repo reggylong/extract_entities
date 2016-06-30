@@ -25,6 +25,7 @@ class ExtractionWriter implements Runnable {
         relations = relations_queue.take();
       } catch (InterruptedException e) {
         Utils.printError(e);
+        Main.backlog.release();
         continue;
       }
       if (relations == Main.POISON_PILL) return;
@@ -34,6 +35,7 @@ class ExtractionWriter implements Runnable {
       if (count % Main.logFrequency == 0) {
         System.out.println(Utils.getElapsed() + count + " written examples");
       }
+      Main.backlog.release();
     }
   }
 }

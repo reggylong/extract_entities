@@ -126,8 +126,8 @@ public class Utils {
       inputWriters.get((int) i % (inputWriters.size())).println(line);
       i++;
     }
-    System.out.println("Finished distributing inputs...now closing input files");
     for (int j = 0; j < nGroups; j++) {
+      System.out.println("Closing input file " + j + ".in");
       inputWriters.get(j).close();
     }
 

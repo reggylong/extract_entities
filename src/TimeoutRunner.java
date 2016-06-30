@@ -27,6 +27,8 @@ class TimeoutRunner implements Runnable {
   }
 
   public void run() {
+    boolean runFailed = false;
+    Main.backlog.acquireUninterruptibly();
     Future<?> future = pool.submit(runner);
     try {
       future.get(timeoutSeconds, TimeUnit.SECONDS);
@@ -34,21 +36,27 @@ class TimeoutRunner implements Runnable {
       System.err.println("TimeoutRunner: interrupted");
       endTask(future);
       logFailed();
+      runFailed = true;
     } catch (ExecutionException e) {
       int failed = Main.failed.incrementAndGet();
       System.err.println("Thread: " + runner + " threw an exception");
       Utils.printFailed(failed);
       endTask(future);
       logFailed();
+      runFailed = true;
     } catch (TimeoutException e) {
       int failed = Main.failed.incrementAndGet();
       System.err.println("Thread: " + runner + " timed out");
       Utils.printFailed(failed);
       endTask(future);
       logFailed();
+      runFailed = true;
     }
     int examined = Main.count.incrementAndGet();
     printExamined(examined);
+    if (runFailed) {
+      Main.backlog.release();
+    }
   }
 
   private void printFailed(int failed) {
