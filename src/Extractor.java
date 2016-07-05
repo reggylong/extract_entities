@@ -25,13 +25,6 @@ import edu.stanford.nlp.trees.TreeCoreAnnotations;
 import edu.stanford.nlp.semgraph.SemanticGraphCoreAnnotations;
 import edu.stanford.nlp.util.CoreMap;
 
-import edu.washington.cs.knowitall.nlp.ChunkedSentence;
-import edu.washington.cs.knowitall.nlp.OpenNlpSentenceChunker;
-import edu.washington.cs.knowitall.extractor.*;
-import edu.washington.cs.knowitall.extractor.conf.*;
-import edu.washington.cs.knowitall.nlp.extraction.ChunkedBinaryExtraction;
-
-
 import javax.json.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.*;
@@ -43,7 +36,7 @@ class Extractor implements Runnable {
   private JsonObject obj;
   private BlockingQueue<String> relations_queue;
 
-  Extractor(BlockingQueue<String> relations_queue, ReVerbExtractor reverb, OpenNlpSentenceChunker chunker, ConfidenceFunction confFunc, JsonObject obj) {
+  Extractor(BlockingQueue<String> relations_queue, JsonObject obj) {
     this.obj = obj;
     // Used to feed input to ExtractionWriter
     this.relations_queue = relations_queue;
@@ -51,6 +44,7 @@ class Extractor implements Runnable {
 
   public void run() {
     Annotation annotation = new Annotation(obj.getString("text"));
+    Main.pipeline.annotate(annotation);
     JsonObjectBuilder article = buildJson(annotation);
     try {
       relations_queue.put(article.build().toString());

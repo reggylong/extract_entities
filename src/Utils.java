@@ -33,20 +33,25 @@ import edu.stanford.nlp.semgraph.SemanticGraphCoreAnnotations;
 import edu.stanford.nlp.util.CoreMap;
 
 import edu.stanford.nlp.ie.util.RelationTriple;
-import edu.washington.cs.knowitall.nlp.*;
-import edu.washington.cs.knowitall.extractor.*;
-import edu.washington.cs.knowitall.extractor.conf.*;
-import edu.washington.cs.knowitall.nlp.extraction.*;
 
 public class Utils {
 
   public static StanfordCoreNLP initPipeline() {
     Properties props = new Properties();
-    props.setProperty("annotators", "tokenize, ssplit, pos, lemma, ner, parse, mention, natlog, dcoref, openie");
-    props.setProperty("dcoref.maxdist", "10");
+    props.setProperty("annotators", "tokenize, ssplit, pos, lemma, ner, depparse, mention, natlog, coref, openie");
+    //props.setProperty("dcoref.maxdist", "10");
     //props.setProperty("parse.model", "CoreNLP/edu/stanford/nlp/models/srparser/englishSR.ser.gz");
+    props.setProperty("coref.doClustering", "false");
     props.setProperty("openie.max_entailments_per_clause", "100");
+    props.setProperty("coref.md.type", "dependency");
     props.setProperty("openie.resolve_coref", "true");
+    return new StanfordCoreNLP(props);
+  } 
+
+  public static StanfordCoreNLP initMiniPipeline() {
+    Properties props = new Properties();
+    props.setProperty("annotators", "tokenize, ssplit, pos, lemma, ner, depparse, natlog, openie");
+    props.setProperty("openie.max_entailments_per_clause", "100");
     return new StanfordCoreNLP(props);
   } 
 
@@ -66,14 +71,6 @@ public class Utils {
     builder.append(triple.objectGloss());
     builder.append(")");
     return builder.toString();
-  }
-
-  public static ReVerbExtractor initExtractor() {
-    return new ReVerbExtractor();
-  }
-
-  public static ConfidenceFunction initConf() throws IOException {
-    return new ReVerbOpenNlpConfFunction();
   }
 
   public static void shutdown(ExecutorService pool) {

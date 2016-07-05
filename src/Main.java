@@ -2,7 +2,10 @@ import java.io.*;
 import java.util.*;
 
 import edu.stanford.nlp.hcoref.data.CorefChain;
+import edu.stanford.nlp.hcoref.CorefCoreAnnotations.CorefChainAnnotation;
 import edu.stanford.nlp.hcoref.CorefCoreAnnotations;
+import edu.stanford.nlp.hcoref.data.CorefChain.CorefMention;
+
 import edu.stanford.nlp.io.*;
 import edu.stanford.nlp.ling.*;
 import edu.stanford.nlp.pipeline.*;
@@ -12,11 +15,6 @@ import edu.stanford.nlp.sentiment.SentimentCoreAnnotations;
 import edu.stanford.nlp.trees.*;
 import edu.stanford.nlp.util.*;
 
-import edu.washington.cs.knowitall.nlp.ChunkedSentence;
-import edu.washington.cs.knowitall.nlp.OpenNlpSentenceChunker;
-import edu.washington.cs.knowitall.extractor.*;
-import edu.washington.cs.knowitall.extractor.conf.*;
-import edu.washington.cs.knowitall.nlp.extraction.ChunkedBinaryExtraction;
 import edu.stanford.nlp.io.*;
 import javax.json.*;
 import java.util.concurrent.*;
@@ -30,21 +28,22 @@ public class Main {
   public static final String inputPath = "inputs";
   public static String outputPath;
   public static final String failedPath = "failed";
-  public static int nGroups = 15;
-  public static final int nWorkers = 7;
+  public static int nGroups = 12;
+  public static final int nWorkers = Runtime.getRuntime().availableProcessors() - 1;
   public static int group = 0;
   public static final AtomicInteger count = new AtomicInteger(0);
   public static final AtomicInteger failed = new AtomicInteger(0);
   public static final AtomicInteger malformed = new AtomicInteger(0);
-  public static int timeout = 600;
+  public static int timeout = 120;
   public static final int terminateTime = 7;
   public static long startTime; 
   // no clean way to prevent string interning
   public static final String POISON_PILL = "POISON PILL END WRITING QUEUE ";
   // # of examples
   public static final int logFrequency = 10;
-  public static final int MAX_BACKLOG = 20;
+  public static final int MAX_BACKLOG = nWorkers;
   public static final Semaphore backlog = new Semaphore(MAX_BACKLOG);
+  public static StanfordCoreNLP pipeline;
 
 
   public static void main(String[] args) throws IOException {
@@ -55,40 +54,10 @@ public class Main {
     outputPath = "/" + Utils.hostname() + "/scr1/reglong/extract_outputs/";
     File dir = new File(outputPath);
     dir.mkdirs();
-    //redirect(); 
+    redirect(); 
+    System.out.println("Using mini pipeline");
+    pipeline = Utils.initMiniPipeline();
 
-    StanfordCoreNLP pipeline = Utils.initPipeline();
-    Annotation annotation = new Annotation("Obama was born in Hawaii. He is our president");
-    pipeline.annotate(annotation);
-
-    List<CoreMap> sentences = annotation.get(CoreAnnotations.SentencesAnnotation.class);
-    /*
-    if (sentences != null) {
-      for (int i = 0; i < sentences.size(); i++) {
-        CoreMap sentence = sentences.get(i);
-        List<CoreLabel> tokens = sentence.get(CoreAnnotations.TokensAnnotation.class);
-        String text = sentence.get(CoreAnnotations.TextAnnotation.class);
-        System.out.println("Text: " + text);
-        Collection<RelationTriple> openieTriples = sentence.get(NaturalLogicAnnotations.RelationTriplesAnnotation.class);
-        if (openieTriples != null && openieTriples.size() > 0) {
-          System.out.println("Extracted the following triples");
-          for (RelationTriple triple : openieTriples) {
-            System.out.println(tripletoString(triple));
-          }
-        }
-      }
-    }*/
-
-
-
-
-
-
-
-
-
-
-    System.exit(0);
     System.out.println(Utils.hostname());
     System.out.println(Utils.getDate());
     System.out.println("Determining size of dataset");
@@ -136,23 +105,17 @@ public class Main {
     ExecutorService pool = Executors.newFixedThreadPool(nWorkers);
 
     PrintWriter w = new PrintWriter(Utils.initOut(outputPath, group));
-    PrintWriter failedW = new PrintWriter(Utils.initOut(failedPath, group));
+    PrintWriter failedW = null;
+    try {
+      failedW = new PrintWriter(failedPath + "/" +  group + "_mini.out");
+    } catch (Exception e) {
+      Utils.exit(e);
+    }
     BlockingQueue<String> relations = new LinkedBlockingQueue<>();
     Thread writer = new Thread(new ExtractionWriter(relations, w));
     writer.start();
 
     BufferedReader in = Utils.initIn(inputPath, group);
-
-    ReVerbExtractor reverb = null;
-    OpenNlpSentenceChunker chunker = null;
-    ConfidenceFunction confFunc = null;
-    try {
-      reverb = new ReVerbExtractor();
-      chunker = new OpenNlpSentenceChunker();
-      confFunc = new ReVerbOpenNlpConfFunction();
-    } catch (IOException e) {
-      Utils.exit(e);
-    }
 
     JsonObject obj = null;
     while ( (obj = Utils.read(in)) != null) {
@@ -170,7 +133,7 @@ public class Main {
         }
         continue;
       }
-      Runnable runner = new Extractor(relations, reverb, chunker, confFunc, obj);
+      Runnable runner = new Extractor(relations, obj);
       scheduler.submit(new TimeoutRunner(pool, id, failedW, runner, timeout));
     }
 
