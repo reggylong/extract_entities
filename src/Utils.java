@@ -1,17 +1,72 @@
 import java.io.*;
 import java.util.*;
 
+import edu.stanford.nlp.io.*;
+import edu.stanford.nlp.ling.*;
+import edu.stanford.nlp.pipeline.*;
+import edu.stanford.nlp.sentiment.SentimentCoreAnnotations;
+import edu.stanford.nlp.trees.*;
+import edu.stanford.nlp.util.*;
 import javax.json.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.*;
 import java.lang.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 
+import edu.stanford.nlp.hcoref.data.CorefChain;
+import edu.stanford.nlp.hcoref.CorefCoreAnnotations;
+import edu.stanford.nlp.ie.machinereading.structure.EntityMention;
+import edu.stanford.nlp.ie.machinereading.structure.MachineReadingAnnotations;
+import edu.stanford.nlp.ie.machinereading.structure.RelationMention;
+import edu.stanford.nlp.ie.util.RelationTriple;
+import edu.stanford.nlp.io.IOUtils;
+import edu.stanford.nlp.io.RuntimeIOException;
+import edu.stanford.nlp.ling.CoreAnnotations;
+import edu.stanford.nlp.ling.CoreLabel;
+import edu.stanford.nlp.naturalli.NaturalLogicAnnotations;
+import edu.stanford.nlp.naturalli.OpenIE;
+import edu.stanford.nlp.sentiment.SentimentCoreAnnotations;
+import edu.stanford.nlp.trees.Tree;
+import edu.stanford.nlp.trees.TreeCoreAnnotations;
+import edu.stanford.nlp.semgraph.SemanticGraphCoreAnnotations;
+import edu.stanford.nlp.util.CoreMap;
+
+import edu.stanford.nlp.ie.util.RelationTriple;
 import edu.washington.cs.knowitall.nlp.*;
 import edu.washington.cs.knowitall.extractor.*;
 import edu.washington.cs.knowitall.extractor.conf.*;
 import edu.washington.cs.knowitall.nlp.extraction.*;
 
 public class Utils {
+
+  public static StanfordCoreNLP initPipeline() {
+    Properties props = new Properties();
+    props.setProperty("annotators", "tokenize, ssplit, pos, lemma, ner, parse, mention, natlog, dcoref, openie");
+    props.setProperty("dcoref.maxdist", "10");
+    //props.setProperty("parse.model", "CoreNLP/edu/stanford/nlp/models/srparser/englishSR.ser.gz");
+    props.setProperty("openie.max_entailments_per_clause", "100");
+    props.setProperty("openie.resolve_coref", "true");
+    return new StanfordCoreNLP(props);
+  } 
+
+  public static String getDate() {
+    DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
+    Date date = new Date();
+    return dateFormat.format(date) + "";
+  }
+
+  public static String tripleToString(RelationTriple triple) {
+    StringBuilder builder = new StringBuilder();
+    builder.append("(");
+    builder.append(triple.subjectGloss());
+    builder.append(", ");
+    builder.append(triple.relationGloss());
+    builder.append(", ");
+    builder.append(triple.objectGloss());
+    builder.append(")");
+    return builder.toString();
+  }
 
   public static ReVerbExtractor initExtractor() {
     return new ReVerbExtractor();
@@ -40,7 +95,7 @@ public class Utils {
     } catch (InterruptedException e) {
       exit(e);
     }
-    
+
   }
 
   public static void printError(Exception e) {

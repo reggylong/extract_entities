@@ -1,8 +1,22 @@
 import java.io.*;
 import java.util.*;
 
-import edu.washington.cs.knowitall.extractor.ReVerbExtractor;
+import edu.stanford.nlp.hcoref.data.CorefChain;
+import edu.stanford.nlp.hcoref.CorefCoreAnnotations;
+import edu.stanford.nlp.io.*;
+import edu.stanford.nlp.ling.*;
+import edu.stanford.nlp.pipeline.*;
+import edu.stanford.nlp.semgraph.SemanticGraph;
+import edu.stanford.nlp.semgraph.SemanticGraphCoreAnnotations;
+import edu.stanford.nlp.sentiment.SentimentCoreAnnotations;
+import edu.stanford.nlp.trees.*;
+import edu.stanford.nlp.util.*;
+
+import edu.washington.cs.knowitall.nlp.ChunkedSentence;
+import edu.washington.cs.knowitall.nlp.OpenNlpSentenceChunker;
+import edu.washington.cs.knowitall.extractor.*;
 import edu.washington.cs.knowitall.extractor.conf.*;
+import edu.washington.cs.knowitall.nlp.extraction.ChunkedBinaryExtraction;
 import edu.stanford.nlp.io.*;
 import javax.json.*;
 import java.util.concurrent.*;
@@ -41,9 +55,42 @@ public class Main {
     outputPath = "/" + Utils.hostname() + "/scr1/reglong/extract_outputs/";
     File dir = new File(outputPath);
     dir.mkdirs();
-    redirect(); 
+    //redirect(); 
 
+    StanfordCoreNLP pipeline = Utils.initPipeline();
+    Annotation annotation = new Annotation("Obama was born in Hawaii. He is our president");
+    pipeline.annotate(annotation);
+
+    List<CoreMap> sentences = annotation.get(CoreAnnotations.SentencesAnnotation.class);
+    /*
+    if (sentences != null) {
+      for (int i = 0; i < sentences.size(); i++) {
+        CoreMap sentence = sentences.get(i);
+        List<CoreLabel> tokens = sentence.get(CoreAnnotations.TokensAnnotation.class);
+        String text = sentence.get(CoreAnnotations.TextAnnotation.class);
+        System.out.println("Text: " + text);
+        Collection<RelationTriple> openieTriples = sentence.get(NaturalLogicAnnotations.RelationTriplesAnnotation.class);
+        if (openieTriples != null && openieTriples.size() > 0) {
+          System.out.println("Extracted the following triples");
+          for (RelationTriple triple : openieTriples) {
+            System.out.println(tripletoString(triple));
+          }
+        }
+      }
+    }*/
+
+
+
+
+
+
+
+
+
+
+    System.exit(0);
     System.out.println(Utils.hostname());
+    System.out.println(Utils.getDate());
     System.out.println("Determining size of dataset");
     int lines = Utils.countLines(dataset);
 
@@ -96,6 +143,17 @@ public class Main {
 
     BufferedReader in = Utils.initIn(inputPath, group);
 
+    ReVerbExtractor reverb = null;
+    OpenNlpSentenceChunker chunker = null;
+    ConfidenceFunction confFunc = null;
+    try {
+      reverb = new ReVerbExtractor();
+      chunker = new OpenNlpSentenceChunker();
+      confFunc = new ReVerbOpenNlpConfFunction();
+    } catch (IOException e) {
+      Utils.exit(e);
+    }
+
     JsonObject obj = null;
     while ( (obj = Utils.read(in)) != null) {
       String id = "";
@@ -112,7 +170,7 @@ public class Main {
         }
         continue;
       }
-      Runnable runner = new Extractor(relations, obj);
+      Runnable runner = new Extractor(relations, reverb, chunker, confFunc, obj);
       scheduler.submit(new TimeoutRunner(pool, id, failedW, runner, timeout));
     }
 

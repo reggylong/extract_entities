@@ -1,11 +1,36 @@
 import java.io.*;
 import java.util.*;
+import edu.stanford.nlp.pipeline.*;
+import edu.stanford.nlp.util.*;
+import edu.stanford.nlp.ling.*;
+import edu.stanford.nlp.naturalli.*;
+import edu.stanford.nlp.ie.*;
+import edu.stanford.nlp.ie.util.*;
+
+
+import edu.stanford.nlp.hcoref.data.CorefChain;
+import edu.stanford.nlp.hcoref.CorefCoreAnnotations;
+import edu.stanford.nlp.ie.machinereading.structure.EntityMention;
+import edu.stanford.nlp.ie.machinereading.structure.MachineReadingAnnotations;
+import edu.stanford.nlp.ie.machinereading.structure.RelationMention;
+import edu.stanford.nlp.ie.util.RelationTriple;
+import edu.stanford.nlp.io.*;
+import edu.stanford.nlp.ling.CoreAnnotations;
+import edu.stanford.nlp.ling.CoreLabel;
+import edu.stanford.nlp.naturalli.NaturalLogicAnnotations;
+import edu.stanford.nlp.naturalli.OpenIE;
+import edu.stanford.nlp.sentiment.SentimentCoreAnnotations;
+import edu.stanford.nlp.trees.Tree;
+import edu.stanford.nlp.trees.TreeCoreAnnotations;
+import edu.stanford.nlp.semgraph.SemanticGraphCoreAnnotations;
+import edu.stanford.nlp.util.CoreMap;
 
 import edu.washington.cs.knowitall.nlp.ChunkedSentence;
 import edu.washington.cs.knowitall.nlp.OpenNlpSentenceChunker;
 import edu.washington.cs.knowitall.extractor.*;
 import edu.washington.cs.knowitall.extractor.conf.*;
 import edu.washington.cs.knowitall.nlp.extraction.ChunkedBinaryExtraction;
+
 
 import javax.json.*;
 import java.util.concurrent.*;
@@ -18,43 +43,15 @@ class Extractor implements Runnable {
   private JsonObject obj;
   private BlockingQueue<String> relations_queue;
 
-  Extractor(BlockingQueue<String> relations_queue, JsonObject obj) {
+  Extractor(BlockingQueue<String> relations_queue, ReVerbExtractor reverb, OpenNlpSentenceChunker chunker, ConfidenceFunction confFunc, JsonObject obj) {
     this.obj = obj;
     // Used to feed input to ExtractionWriter
     this.relations_queue = relations_queue;
   }
 
   public void run() {
-    ReVerbExtractor reverb = null;
-    OpenNlpSentenceChunker chunker = null;
-    ConfidenceFunction confFunc = null;
-    try {
-      chunker = new OpenNlpSentenceChunker();
-      confFunc = Utils.initConf();
-      reverb = Utils.initExtractor();
-    } catch (IOException e) {
-      System.err.println("Unable to initialize pipeline");
-      Utils.printError(e);
-      Main.backlog.release();
-      return;
-    }
-
-    Document doc = new Document(obj.getString("text"));
-
-    List<Sentence> sentences = doc.sentences();
-    JsonObjectBuilder article = Json.createObjectBuilder();
-    for (int i = 0; i < sentences.size(); i++) {
-      JsonArrayBuilder sentenceRelations = Json.createArrayBuilder();
-      ChunkedSentence sent = chunker.chunkSentence(sentences.get(i).toString());
-      for (ChunkedBinaryExtraction extr : reverb.extract(sent)) {
-        sentenceRelations.add(Json.createObjectBuilder()
-            .add("relation", getTuple(confFunc, extr)));
-      }
-      article.add(i + "", sentenceRelations);
-    }
-    article.add("length", sentences.size() + "");
-    article.add("articleId", obj.getInt("articleId") + "");
-    article.add("date", obj.getString("date"));
+    Annotation annotation = new Annotation(obj.getString("text"));
+    JsonObjectBuilder article = buildJson(annotation);
     try {
       relations_queue.put(article.build().toString());
     } catch (InterruptedException e) {
@@ -65,8 +62,30 @@ class Extractor implements Runnable {
 
   }
 
-  private String getTuple(ConfidenceFunction confFunc, ChunkedBinaryExtraction extr) {
-    return "(" + extr.getArgument1() + ", " + extr.getRelation() + ", " + extr.getArgument2() + ", " + confFunc.getConf(extr) + ")";
+  private JsonObjectBuilder buildJson(Annotation annotation) {
+    List<CoreMap> sentences = annotation.get(CoreAnnotations.SentencesAnnotation.class); 
+    JsonObjectBuilder article = Json.createObjectBuilder();
+    for (int i = 0; i < sentences.size(); i++) {
+      JsonArrayBuilder sentenceRelations = Json.createArrayBuilder();
+       
+      CoreMap sentence = sentences.get(i);
+      String text = sentence.get(CoreAnnotations.TextAnnotation.class);
+      sentenceRelations.add(Json.createObjectBuilder().add("s", text));
+
+      List<CoreLabel> tokens = sentence.get(CoreAnnotations.TokensAnnotation.class);
+      Collection<RelationTriple> openieTriples = sentence.get(NaturalLogicAnnotations.RelationTriplesAnnotation.class);
+      if (openieTriples != null && openieTriples.size() > 0) {
+        for (RelationTriple triple : openieTriples) {
+          sentenceRelations.add(Json.createObjectBuilder()
+              .add("r", Utils.tripleToString(triple)));
+        }
+      }
+      article.add(i + "", sentenceRelations);
+    }
+    article.add("length", sentences.size() + "");
+    article.add("articleId", obj.getInt("articleId") + "");
+    article.add("date", obj.getString("date"));
+    return article;
   }
 
 }

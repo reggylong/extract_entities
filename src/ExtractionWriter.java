@@ -5,6 +5,8 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.lang.*;
 
+
+
 class ExtractionWriter implements Runnable {
  
   private final BlockingQueue<String> relations_queue;
