@@ -1,0 +1,4 @@
+#!/bin/sh
+
+rm -rf /*/scr1/reglong/extract_output/*
+rm -rf /*/scr1/reglong/extract_logs/*

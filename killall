@@ -1,0 +1,8 @@
+#!/bin/bash
+
+array=(john0 john1 john2 john3 john4 john5 john6 john7 john8 john9 john11 jude20 jude21 jude22 jude23 jude24 jude25 jude29 jude31 jude32 jude33 jude36 jude37 jude41 jude42 jude44 jagupard4 jagupard5 jagupard6)
+
+for name in "${array[@]}"
+do
+  ssh $name 'pkill -u reggylong'
+done

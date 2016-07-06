@@ -1,0 +1,9 @@
+#!/bin/sh
+
+
+array=(jude20 jude21 jude22 jude23 jude24 jude25 jude29 jude30 jude31 jude32 jude33 jude34)
+comm="java -cp resources:classes Main"
+
+du -sch /jude*/scr1/reglong/extract_mini_outputs/* #/john*/scr1/reglong/extract_outputs/*.out /jag*/scr1/reglong/extract_outputs/*.out 
+
+

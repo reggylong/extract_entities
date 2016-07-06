@@ -1,0 +1,16 @@
+#!/bin/sh
+
+#array=(john1 john2 john3 john4 john5 john6 john7 john9 john11 jagupard4 jagupard5 jagupard6)
+
+#for i in "${!array[@]}"; do
+#  echo "${array[$i]}" 'cd extract_entities;'"java -cp CoreNLP:resources:classes Main $i"
+#  ssh "${array[$i]}" 'cd extract_entities;'"java -cp CoreNLP:resources:classes Main $i" &
+#done
+
+array=(jude20 jude21 jude22 jude23 jude24 jude25 jude29 jude30 jude31 jude32 jude33 jude34)
+
+for i in "${!array[@]}"; do
+  echo "${array[$i]}" 'cd extract_entities;'"java -cp CoreNLP:resources:classes Main $i"
+  ssh "${array[$i]}" 'cd extract_entities;'"java -cp CoreNLP:resources:classes Main $i" &
+done
+

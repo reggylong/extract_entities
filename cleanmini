@@ -1,0 +1,4 @@
+#!/bin/sh
+
+rm -rf /jude*/scr1/reglong/extract_outputs/*
+rm -rf /jude*/scr1/reglong/extract_logs/*

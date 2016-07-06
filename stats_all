@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# mini pipeline
+#array=(jude20 jude21 jude22 jude23 jude24 jude25 jude29 jude30 jude31 jude32 jude33 jude34)
+array=(jude20 jude21 jude22 jude23 jude24 jude25 jude29 jude31 jude32 jude33 jude36 jude37 jude41 jude42 jude44)
+
+
+files=""
+for i in "${!array[@]}"; do
+  files+="/${array[$i]}/scr1/reglong/reverb_outputs/$i.out"
+  files+=" "
+done
+
+python stats.py $files

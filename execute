@@ -1,0 +1,3 @@
+#!/bin/sh
+
+java -cp CoreNLP:resources:classes -Xmx100G Main $1

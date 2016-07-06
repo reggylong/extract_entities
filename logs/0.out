@@ -1,0 +1,28 @@
+jackknife
+Determining size of dataset
+Checking inputs/0.in
+Checking inputs/1.in
+Checking inputs/2.in
+Checking inputs/3.in
+Checking inputs/4.in
+Checking inputs/5.in
+Checking inputs/6.in
+Checking inputs/7.in
+Using cached inputs...
+Processing articles...
+Determining lines of work
+68340 examples
+[0 min(s) elapsed]10 executions run
+[0 min(s) elapsed]10 written examples
+[0 min(s) elapsed]20 executions run
+[0 min(s) elapsed]20 written examples
+[0 min(s) elapsed]30 written examples
+[0 min(s) elapsed]30 executions run
+[0 min(s) elapsed]40 executions run
+[0 min(s) elapsed]40 written examples
+[0 min(s) elapsed]50 executions run
+[0 min(s) elapsed]50 written examples
+[1 min(s) elapsed]60 executions run
+[1 min(s) elapsed]60 written examples
+[1 min(s) elapsed]70 written examples
+[1 min(s) elapsed]70 executions run

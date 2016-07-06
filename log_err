@@ -1,0 +1,3 @@
+#!/bin/sh
+
+tail -f /john*/scr1/reglong/extract_logs/*.err
