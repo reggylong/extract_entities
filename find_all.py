@@ -49,7 +49,6 @@ def main():
   line = ""
   newline_count = 0
   total = 0
-  n = 50
   while True:
     article = ""
     while True:
@@ -61,21 +60,24 @@ def main():
       article += line
     if newline_count > 1:
       break
-    article_json = json.loads(article)
-    count, pairs = search(article_json)
-    if count == 0:
-      continue
-    g.write("ARTICLE ID: " + article_json['articleId'] + article_json['date']  + '\n')
-    for sentence, relations in pairs:
-      if len(relations) == 0:
+    try:
+      article_json = json.loads(article)
+      count, pairs = search(article_json, "obama", "minneapolis")
+      if count == 0:
         continue
-      g.write("Sentence: " + sentence.encode('utf-8') + "\n")
-      for relation in relations:
-        g.write(relation.encode('utf-8') + "\n")
-      g.write("\n")
+      g.write("ARTICLE ID: " + article_json['articleId'] + article_json['date']  + '\n')
+      for sentence, relations in pairs:
+        if len(relations) == 0:
+          continue
+        g.write("Sentence: " + sentence.encode('utf-8') + "\n")
+        for relation in relations:
+          g.write(relation.encode('utf-8') + "\n")
+        g.write("\n")
+    except ValueError:
+      pass
     total += 1
-    if total == 50:
-      break
+    if total % 1000 == 0:
+      print "Read " + str(total) + " examples"
   g.close()
   f.close()
 

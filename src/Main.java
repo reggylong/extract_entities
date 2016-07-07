@@ -28,7 +28,6 @@ public class Main {
   public static final String inputPath = "inputs";
   public static String outputPath;
   public static final String failedPath = "failed";
-  public static int nGroups = 12;
   public static final int nWorkers = Runtime.getRuntime().availableProcessors() - 1;
   public static int group = 0;
   public static final AtomicInteger count = new AtomicInteger(0);
@@ -55,21 +54,11 @@ public class Main {
     File dir = new File(outputPath);
     dir.mkdirs();
     redirect(); 
-    System.out.println("Using mini pipeline");
-    pipeline = Utils.initMiniPipeline();
+    pipeline = Utils.initPipeline();
 
     System.out.println(Utils.hostname());
     System.out.println(Utils.getDate());
-    System.out.println("Determining size of dataset");
-    int lines = Utils.countLines(dataset);
 
-    if (!Utils.isCached(inputPath, nGroups)) {
-      System.out.println("Distributing inputs");
-      Utils.distributeInputs(dataset, inputPath, lines, nGroups);
-      System.out.println("Finished distributing inputs");
-    } else {
-      System.out.println("Using cached inputs...");
-    }
     System.out.println("Processing articles...");
     processArticles(group);
     System.out.println("Finished processing articles");
@@ -105,12 +94,13 @@ public class Main {
     ExecutorService pool = Executors.newFixedThreadPool(nWorkers);
 
     PrintWriter w = new PrintWriter(Utils.initOut(outputPath, group));
-    PrintWriter failedW = null;
+    PrintWriter failedW = new PrintWriter(Utils.initOut(failedPath, group));
+    /*
     try {
       failedW = new PrintWriter(failedPath + "/" +  group + "_mini.out");
     } catch (Exception e) {
       Utils.exit(e);
-    }
+    }*/
     BlockingQueue<String> relations = new LinkedBlockingQueue<>();
     Thread writer = new Thread(new ExtractionWriter(relations, w));
     writer.start();

@@ -2,6 +2,7 @@
 
 # mini pipeline
 #array=(jude20 jude21 jude22 jude23 jude24 jude25 jude29 jude30 jude31 jude32 jude33 jude34)
+# ReVerb pipeline
 array=(jude20 jude21 jude22 jude23 jude24 jude25 jude29 jude31 jude32 jude33 jude36 jude37 jude41 jude42 jude44)
 
 
@@ -11,4 +12,5 @@ for i in "${!array[@]}"; do
   files+=" "
 done
 
-python stats.py $files
+cl upload $files
+#python unique_entities.py $files
