@@ -1,0 +1,10 @@
+#!/bin/sh
+
+array=(jude20 jude21 jude22 jude23 jude24 jude25 jude29 jude31 jude32 jude33 jude36 jude37 jude41 jude42 jude44)
+
+for i in "${!array[@]}"; do
+  echo "${array[$i]}" 'cd extract_entities;'"java -cp CoreNLP:Reverb:classes Main $i"
+  ssh "${array[$i]}" 'cd extract_entities;'"java -cp CoreNLP:Reverb:classes Main $i" &
+done
+
+

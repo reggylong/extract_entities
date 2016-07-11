@@ -3,14 +3,16 @@
 # mini pipeline
 #array=(jude20 jude21 jude22 jude23 jude24 jude25 jude29 jude30 jude31 jude32 jude33 jude34)
 # ReVerb pipeline
-array=(jude20 jude21 jude22 jude23 jude24 jude25 jude29 jude31 jude32 jude33 jude36 jude37 jude41 jude42 jude44)
+#array=(jude20 jude21 jude22 jude23 jude24 jude25 jude29 jude31 jude32 jude33 jude36 jude37 jude41 jude42 jude44)
+# coref pipeline
+array=(john1 john0 john11 jagupard5 jagupard4 john3 john11 john7 john11 jagupard5 jagupard5 john2)
 
 
 files=""
 for i in "${!array[@]}"; do
-  files+="/${array[$i]}/scr1/reglong/reverb_outputs/$i.out"
+  files+="/${array[$i]}/scr1/reglong/extract_outputs/$i.out"
   files+=" "
 done
 
-cl upload $files
-#python unique_entities.py $files
+#cl upload $files
+python stats.py $files

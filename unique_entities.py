@@ -2,7 +2,6 @@ import sys
 import json
 from collections import Counter
 from ast import literal_eval
-import re
 
 total_extractions = 0 
 predicates = set()
@@ -20,13 +19,12 @@ def get_relations(doc):
   relations = []
   for i in xrange(length):
     n_sentences += 1
-    if str(i) in doc:
-      for x in doc[str(i)]:
-        for k, v in x.iteritems():
-          if k == 'r' or k == 'relation':
-            relations.append(v)
-    else:
-      raise ValueError("Key not found: " + str(i))
+    if str(i) not in doc:
+      raise ValueError("Could not find key: " + str(i))
+    for x in doc[str(i)]:
+      for k, v in x.iteritems():
+        if k == 'r' or k == 'relation':
+          relations.append(v)
   return relations
 
 args = sys.argv[1:]
@@ -34,6 +32,8 @@ print args
 pronouns = ['it', 'he', 'she', 'they', 'him', 'her', 'them', 'i', 'me', 'we', 'us', 'you']
 
 
+subjects = set()
+objects = set()
 count = 0
 for fname in args:
   print "Examining " + fname
@@ -50,15 +50,9 @@ for fname in args:
       total_extractions += len(relations) 
       for rel in relations:
         r = to_list(rel)
-        predicates.add(r[1].lower())
-        sub_tokens = set(re.split('\W+', r[0].lower()))
-        obj_tokens = set(re.split('\W+', r[2].lower()))
-        for x in pronouns:
-          if x in sub_tokens or x in obj_tokens:
-            extractions_with_pronouns += 1
-            break
+        subjects.add(r[0].lower())
+        objects.add(r[2].lower())
     except ValueError:
-      print "Error at line: " + str(count)
       pass
     count += 1
     if count % 1000 == 0:
@@ -66,9 +60,15 @@ for fname in args:
 
   f.close()
       
-print("Total extractions: " + str(total_extractions))
-print("Number of unique predicates: " + str(len(predicates)))
-print("Number of extractions with pronouns: " + str(extractions_with_pronouns))
-print("Total number of sentences: " + str(n_sentences))
-print("Total number of articles: " + str(n_articles))
+entities = subjects.union(objects) 
+shared_entities = subjects.intersection(objects)
 
+h = open("entities_output", "w")
+h.write("Number of unique subjects: " + str(len(subjects)) + "\n")
+h.write("Number of unique objects: " + str(len(objects)) + "\n")
+h.write("Size of intersection of subjects and objects:" + str(len(shared_entities)) + "\n")
+h.write("Total number of unique entities: " + str(len(entities)) + "\n")
+h.write("Total number of sentences: " + str(n_sentences) + "\n")
+h.write("Total number of articles: " + str(n_articles) + "\n")
+
+h.close()
